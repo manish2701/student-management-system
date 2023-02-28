@@ -3,6 +3,14 @@ from tkinter import ttk
 from tkinter import messagebox
 import mysql.connector
 
+#===============MySQL connection=============
+def mysql_connect():
+    global con
+    con = mysql.connector.connect(user='root', password='Manish@2701',host='localhost',database='student')
+        
+    global cursor
+    cursor = con.cursor()
+
 
 class Student:
     def __init__(self,root):
@@ -12,6 +20,8 @@ class Student:
 
         title = Label(self.root,text="Student Management System",font=("times new roman",40,"bold"),bg="yellow",fg="red",bd=10,relief=GROOVE)
         title.pack(side=TOP,fill=X)
+
+
 
 
         #===============All Variables==============
@@ -146,7 +156,7 @@ class Student:
         self.Student_table.column("dob",width=100)
         self.Student_table.column("address",width=150)
 
-        self.Student_table.bind("<ButtonRelease-1>",self.get_cursor)
+        self.Student_table.bind("<ButtonRelease-1>",self.get_cursorsor)
 
         self.Student_table.pack(fill=BOTH,expand=1) 
 
@@ -163,11 +173,9 @@ class Student:
             messagebox.showerror("Error","Some required fields (*) are empty")
         
         else:
-            con = mysql.connector.connect(user='root', password='Manish@2701',host='localhost',database='student')
-        
-            cur = con.cursor()
+            mysql_connect()
 
-            cur.execute("insert into students values(%s,%s,%s,%s,%s,%s,%s)",(self.Roll_No_var.get(),
+            cursor.execute("insert into students values(%s,%s,%s,%s,%s,%s,%s)",(self.Roll_No_var.get(),
                                                                             self.name_var.get(),
                                                                             self.email_var.get(),
                                                                             self.gender_var.get(),
@@ -186,13 +194,11 @@ class Student:
             messagebox.showinfo("Success","Record has been inserted")
 
     def fetch_data(self):
-        con = mysql.connector.connect(user='root', password='Manish@2701',host='localhost',database='student')
-    
-        cur = con.cursor()
+        mysql_connect()
 
-        cur.execute("select * from students")
+        cursor.execute("select * from students")
 
-        rows=cur.fetchall()
+        rows=cursor.fetchall()
         if len(rows)!=0:
             self.Student_table.delete(*self.Student_table.get_children())
             for row in rows:
@@ -209,9 +215,9 @@ class Student:
         self.dob_var.set("")
         self.txt_address.delete('1.0',END)
 
-    def get_cursor(self,ev):
-        cursor_row=self.Student_table.focus()
-        contents=self.Student_table.item(cursor_row) 
+    def get_cursorsor(self,ev):
+        cursorsor_row=self.Student_table.focus()
+        contents=self.Student_table.item(cursorsor_row) 
         row=contents['values']
 
         #here row will give the values in a list form
@@ -226,11 +232,9 @@ class Student:
         self.txt_address.insert(END, row[6])
 
     def update_data(self):
-        con = mysql.connector.connect(user='root', password='Manish@2701',host='localhost',database='student')
-    
-        cur = con.cursor()
+        mysql_connect()
 
-        cur.execute("update students set name=%s, email=%s, gender=%s, contact=%s, dob=%s , address=%s where roll_no=%s",(
+        cursor.execute("update students set name=%s, email=%s, gender=%s, contact=%s, dob=%s , address=%s where roll_no=%s",(
                                                                         self.name_var.get(),
                                                                         self.email_var.get(),
                                                                         self.gender_var.get(),
@@ -248,11 +252,9 @@ class Student:
         con.close()
 
     def delete_data(self):
-        con = mysql.connector.connect(user='root', password='Manish@2701',host='localhost',database='student')
-    
-        cur = con.cursor()
+        mysql_connect()
 
-        cur.execute("delete from students where roll_no=%s",(self.Roll_No_var.get(),))
+        cursor.execute("delete from students where roll_no=%s",(self.Roll_No_var.get(),))
 
         con.commit()
         
@@ -267,24 +269,24 @@ class Student:
             messagebox.showerror("Error","all fields are required for searching data")
         
         else:
-            con = mysql.connector.connect(user='root', password='Manish@2701',host='localhost',database='student')
-        
-            cur = con.cursor()
+            mysql_connect()
             #checks if the input is in int if yes then uses =  sign
             #checks if the input in in string if yes then uses LIKE operator
             if type(self.search_txt.get()) == str:
-                cur.execute("select * from students where "+str(self.search_by.get())+" LIKE '%"+str(self.search_txt.get())+"%'")
+                cursor.execute("select * from students where "+str(self.search_by.get())+" LIKE '%"+str(self.search_txt.get())+"%'")
             elif type(self.search_txt.get()) == int:
-                cur.execute("select * from students where "+str(self.search_by.get())+"="+str(self.search_txt.get()))
+                cursor.execute("select * from students where "+str(self.search_by.get())+"="+str(self.search_txt.get()))
 
 
-            rows=cur.fetchall()
+            rows=cursor.fetchall()
             if len(rows)!=0:
                 self.Student_table.delete(*self.Student_table.get_children())
                 for row in rows:
                     self.Student_table.insert('',END, values=row)
                 con.commit()
             con.close()
+
+
 
 
 root = Tk()
