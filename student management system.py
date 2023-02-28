@@ -1,6 +1,8 @@
 from tkinter import *
 from tkinter import ttk
+from tkinter import messagebox
 import mysql.connector
+
 
 class Student:
     def __init__(self,root):
@@ -19,8 +21,8 @@ class Student:
         self.gender_var = StringVar()
         self.contact_var = StringVar()
         self.dob_var = StringVar()
-
-
+        self.search_by = StringVar()
+        self.search_txt = StringVar()
 
         #===============Manage Frame===============
         manage_frame = Frame(self.root,bg="crimson",bd=4,relief=RIDGE)
@@ -31,7 +33,7 @@ class Student:
 
 
 
-        lbl_roll = Label(manage_frame,text="Roll No.",bg="crimson",fg="white",font=("times new roman",20,"bold"))
+        lbl_roll = Label(manage_frame,text="Roll No. *",bg="crimson",fg="white",font=("times new roman",20,"bold"))
         lbl_roll.grid(row=1,column=0,pady=10,padx=20,sticky="w")
 
         txt_roll = Entry(manage_frame,textvariable=self.Roll_No_var,font=("times new roman",20,"bold"),bd=5,relief=GROOVE)
@@ -39,7 +41,7 @@ class Student:
 
 
 
-        lbl_name = Label(manage_frame,text="Name",bg="crimson",fg="white",font=("times new roman",20,"bold"))
+        lbl_name = Label(manage_frame,text="Name *",bg="crimson",fg="white",font=("times new roman",20,"bold"))
         lbl_name.grid(row=2,column=0,pady=10,padx=20,sticky="w")
 
         txt_name = Entry(manage_frame,textvariable=self.name_var,font=("times new roman",20,"bold"),bd=5,relief=GROOVE)
@@ -55,7 +57,7 @@ class Student:
 
 
 
-        lbl_gender = Label(manage_frame,text="Gender",bg="crimson",fg="white",font=("times new roman",20,"bold"))
+        lbl_gender = Label(manage_frame,text="Gender *",bg="crimson",fg="white",font=("times new roman",20,"bold"))
         lbl_gender.grid(row=4,column=0,pady=10,padx=20,sticky="w")
 
         combo_gender = ttk.Combobox(manage_frame,textvariable=self.gender_var,font=("times new roman",14,"bold"),state='readonly')
@@ -64,7 +66,7 @@ class Student:
 
 
 
-        lbl_contact = Label(manage_frame,text="Contact",bg="crimson",fg="white",font=("times new roman",20,"bold"))
+        lbl_contact = Label(manage_frame,text="Contact *",bg="crimson",fg="white",font=("times new roman",20,"bold"))
         lbl_contact.grid(row=5,column=0,pady=10,padx=20,sticky="w")
 
         txt_contact = Entry(manage_frame,textvariable=self.contact_var,font=("times new roman",20,"bold"),bd=5,relief=GROOVE)
@@ -72,7 +74,7 @@ class Student:
 
 
 
-        lbl_dob = Label(manage_frame,text="DOB",bg="crimson",fg="white",font=("times new roman",20,"bold"))
+        lbl_dob = Label(manage_frame,text="DOB *",bg="crimson",fg="white",font=("times new roman",20,"bold"))
         lbl_dob.grid(row=6,column=0,pady=10,padx=20,sticky="w")
 
         txt_dob = Entry(manage_frame,textvariable=self.dob_var,font=("times new roman",20,"bold"),bd=5,relief=GROOVE)
@@ -80,7 +82,7 @@ class Student:
 
 
 
-        lbl_address = Label(manage_frame,text="Address",bg="crimson",fg="white",font=("times new roman",20,"bold"))
+        lbl_address = Label(manage_frame,text="Address *",bg="crimson",fg="white",font=("times new roman",20,"bold"))
         lbl_address.grid(row=7,column=0,pady=10,padx=20,sticky="w")
 
         self.txt_address = Text(manage_frame,width=21,height=5,font=("",15))
@@ -102,15 +104,15 @@ class Student:
         lbl_search = Label(detail_frame,text="Search By",bg="crimson",fg="white",font=("times new roman",20,"bold"))
         lbl_search.grid(row=0,column=0,pady=20,padx=20,sticky="w")
 
-        combo_search = ttk.Combobox(detail_frame,font=("times new roman",14,"bold"),state='readonly')
-        combo_search['values'] = ('Roll no.','Name','Contact')
+        combo_search = ttk.Combobox(detail_frame,textvariable=self.search_by,font=("times new roman",14,"bold"),state='readonly')
+        combo_search['values'] = ('roll_no','name','contact')
         combo_search.grid(row=0,column=1,padx=20,pady=20)
 
-        txt_search = Entry(detail_frame,font=("times new roman",20,"bold"),bd=5,relief=GROOVE)
+        txt_search = Entry(detail_frame,textvariable=self.search_txt,font=("times new roman",20,"bold"),bd=5,relief=GROOVE)
         txt_search.grid(row=0,column=2,pady=10,padx=20,sticky="w")
 
-        searchbtn = Button(detail_frame,text="Search",width=5).grid(row=0,column=3,padx=10,pady=10)
-        showallbtn = Button(detail_frame,text="Show all",width=5).grid(row=0,column=4,padx=10,pady=10)
+        searchbtn = Button(detail_frame,text="Search",width=5,command=self.search_data).grid(row=0,column=3,padx=10,pady=10)
+        showallbtn = Button(detail_frame,text="Show all",width=5,command=self.fetch_data).grid(row=0,column=4,padx=10,pady=10)
 
         #================Table Frame================
         table_frame = Frame(detail_frame,bg="crimson",bd=4,relief=RIDGE)
@@ -151,25 +153,37 @@ class Student:
         self.fetch_data()
 
     def add_students(self):
-        con = mysql.connector.connect(user='root', password='Manish@2701',host='localhost',database='student')
-    
-        cur = con.cursor()
+        if (self.Roll_No_var.get()=="" or 
+            self.name_var.get()=="" or 
+            self.gender_var.get()=="" or
+            self.contact_var.get()=="" or
+            self.dob_var.get()=="" or
+            self.txt_address.get('1.0',END)==""):
 
-        cur.execute("insert into students values(%s,%s,%s,%s,%s,%s,%s)",(self.Roll_No_var.get(),
-                                                                        self.name_var.get(),
-                                                                        self.email_var.get(),
-                                                                        self.gender_var.get(),
-                                                                        self.contact_var.get(),
-                                                                        self.dob_var.get(),
-                                                                        self.txt_address.get('1.0',END)
-                                                                        ))
+            messagebox.showerror("Error","Some required fields (*) are empty")
+        
+        else:
+            con = mysql.connector.connect(user='root', password='Manish@2701',host='localhost',database='student')
+        
+            cur = con.cursor()
 
-        con.commit()
+            cur.execute("insert into students values(%s,%s,%s,%s,%s,%s,%s)",(self.Roll_No_var.get(),
+                                                                            self.name_var.get(),
+                                                                            self.email_var.get(),
+                                                                            self.gender_var.get(),
+                                                                            self.contact_var.get(),
+                                                                            self.dob_var.get(),
+                                                                            self.txt_address.get('1.0',END)
+                                                                            ))
 
-        self.fetch_data()
-        self.clear()
+            con.commit()
 
-        con.close()
+            self.fetch_data()
+            self.clear()
+
+            con.close()
+
+            messagebox.showinfo("Success","Record has been inserted")
 
     def fetch_data(self):
         con = mysql.connector.connect(user='root', password='Manish@2701',host='localhost',database='student')
@@ -246,6 +260,31 @@ class Student:
 
         self.fetch_data()
         self.clear()
+
+    def search_data(self):
+        if (self.search_by.get()=="" or self.search_txt.get()==""):
+
+            messagebox.showerror("Error","all fields are required for searching data")
+        
+        else:
+            con = mysql.connector.connect(user='root', password='Manish@2701',host='localhost',database='student')
+        
+            cur = con.cursor()
+            #checks if the input is in int if yes then uses =  sign
+            #checks if the input in in string if yes then uses LIKE operator
+            if type(self.search_txt.get()) == str:
+                cur.execute("select * from students where "+str(self.search_by.get())+" LIKE '%"+str(self.search_txt.get())+"%'")
+            elif type(self.search_txt.get()) == int:
+                cur.execute("select * from students where "+str(self.search_by.get())+"="+str(self.search_txt.get()))
+
+
+            rows=cur.fetchall()
+            if len(rows)!=0:
+                self.Student_table.delete(*self.Student_table.get_children())
+                for row in rows:
+                    self.Student_table.insert('',END, values=row)
+                con.commit()
+            con.close()
 
 
 root = Tk()
